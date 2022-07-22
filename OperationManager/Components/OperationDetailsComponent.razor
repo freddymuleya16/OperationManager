@@ -1,0 +1,69 @@
+﻿@using OperationManager.Models
+
+
+
+<div class="modal fade" id="operation-details-modal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="staticBackdropLabel">Operation Details</h5>
+                <button type="button" class="btn" data-bs-dismiss="modal" aria-label="Close">X</button>
+            </div>
+
+            <div class="modal-body">
+                <div class="start-text">
+                    <p>
+                        <strong>ID:</strong>
+                        <span>@Operation.OperationID</span>
+                    </p>
+                    <p>
+                        <strong>Name:</strong>
+                        <span>@Operation.Name</span>
+                    </p>
+                    <p>
+                        <strong>Order in which to perform:</strong>
+                        <span>@Operation.OrderInWhichToPerform</span>
+                    </p>
+                    <p>
+                        <strong>Device:</strong>
+                        <div class="ml-4">
+                            <p>
+                                <strong>ID:</strong>
+                                <span>@Operation.Device.DeviceID</span>
+                            </p>
+                            <p>
+                                <strong>Name:</strong>
+                                <span>@Operation.Device.Name</span>
+                            </p>
+                            <p>
+                                <strong>Type:</strong>
+                                <span>@Operation.Device.DeviceType</span>
+                            </p>
+                        </div>
+                    </p>
+                    <p>
+                        <strong>Image:</strong>
+                        <span>
+                            @if (Operation.ImageData is not null)
+                            {
+                                <img src="@string.Format("data:image/gif;base64,{0}", Convert.ToBase64String(Operation.ImageData))" style="width: 200px;">
+                            }
+                        </span>
+                    </p>
+
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+@code {
+    [Parameter]
+    public Operation Operation { get; set; }
+    [Parameter]
+    public EventCallback<Operation> OperationChanged { get; set; }
+
+}

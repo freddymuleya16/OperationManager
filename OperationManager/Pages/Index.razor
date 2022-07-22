@@ -34,8 +34,8 @@ else
                     <td>@item.Name</td>
                     <td>@item.DeviceType</td>
                     <td>
-                        @*<i class="btn btn-outline-warning fa fa-1x fa-pencil-alt mr-1 rounded-circle"></i>
-                            <i class="btn btn-outline-info fa fa-info mr-1 rounded-circle"></i>*@
+                        @*<i class="btn btn-outline-warning fa fa-1x fa-pencil-alt mr-1 rounded-circle"></i>*@
+                        <i class="btn btn-outline-info fa fa-info mr-1 rounded-circle" data-bs-toggle="modal" data-bs-target="#device-details-modal" @onclick="()=>OnOpenDeviceDetails(item.DeviceID)"></i>
                         <i class="btn btn-outline-danger fa fa-trash-alt rounded-circle" @onclick="()=>OnDeleteDevice(item.DeviceID)"></i>
                     </td>
                 </tr>
@@ -43,6 +43,7 @@ else
         </tbody>
     </table>
     <OperationManager.Components.CreateDeviceComponent @bind-deviceList="deviceList" />
+    <OperationManager.Components.DeviceDetailsComponent @bind-Device="device" />
 
 }
 <h1>Manage Operations</h1>
@@ -81,8 +82,8 @@ else
                     <td>@item.Device.Name</td>
                     <td>@item.Device.DeviceType</td>
                     <td>
-                        @*<i class="btn btn-outline-warning fa fa-1x fa-pencil-alt mr-1 rounded-circle"></i>
-                            <i class="btn btn-outline-info fa fa-info mr-1 rounded-circle"></i>*@
+                        @*<i class="btn btn-outline-warning fa fa-1x fa-pencil-alt mr-1 rounded-circle"></i>*@
+                        <i class="btn btn-outline-info fa fa-info mr-1 rounded-circle" data-bs-toggle="modal" data-bs-target="#operation-details-modal" @onclick="()=>OnOpenOperationDetails(item.OperationID)"></i>
                         <i class="btn btn-outline-danger fa fa-trash-alt rounded-circle" @onclick="()=>OnDeleteOperation(item.OperationID)"></i>
                     </td>
                 </tr>
@@ -90,16 +91,34 @@ else
         </tbody>
     </table>
     <OperationManager.Components.CreateOperationComponent @bind-operationsList="operationsList" />
-
+    <OperationManager.Components.OperationDetailsComponent @bind-Operation="operation" />
 }
 @code {
     public List<Operation> operationsList;
     private List<Device> deviceList;
+    private Device device;
+    private Operation operation;
 
     protected override async Task OnInitializedAsync()
     {
         operationsList = await OperationService.GetOperationsAsync();
         deviceList = await DeviceService.GetDevicesAsync();
+        device = new Device();
+        operation = new Operation()
+            {
+                Device = new Device()
+            };
+    }
+
+    async Task OnOpenDeviceDetails(int id)
+    {
+        device = await DeviceService.GetDevicesByIdAsync(id);
+        this.StateHasChanged();
+    }
+    async Task OnOpenOperationDetails(int id)
+    {
+        operation = await OperationService.GetOperationsByIdAsync(id);
+        this.StateHasChanged();
     }
 
     async Task OnDeleteOperation(int id)
