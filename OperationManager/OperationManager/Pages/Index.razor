@@ -1,0 +1,125 @@
+﻿@page "/"
+@using OperationManager.Helpers
+@using OperationManager.Models
+@using OperationManager.Services
+@using Microsoft.AspNetCore.Http
+@using Newtonsoft.Json
+@using System.IO
+@inject OperationService OperationService
+@inject DeviceService DeviceService
+@inject IJSRuntime JsRuntime
+
+<h1>Manage Devices</h1>
+<div class="justify-content-end p-3 row">
+    <button class="btn btn-primary" type="button" data-bs-toggle="modal" data-bs-target="#create-device-modal">Add Device</button>
+</div>
+@if (deviceList == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Device Type</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in deviceList)
+            {
+                <tr>
+                    <td>@item.Name</td>
+                    <td>@item.DeviceType</td>
+                    <td>
+                        @*<i class="btn btn-outline-warning fa fa-1x fa-pencil-alt mr-1 rounded-circle"></i>
+                            <i class="btn btn-outline-info fa fa-info mr-1 rounded-circle"></i>*@
+                        <i class="btn btn-outline-danger fa fa-trash-alt rounded-circle" @onclick="()=>OnDeleteDevice(item.DeviceID)"></i>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+    <OperationManager.Components.CreateDeviceComponent @bind-deviceList="deviceList" />
+
+}
+<h1>Manage Operations</h1>
+<div class="justify-content-end p-3 row">
+    <button class="btn btn-primary" type="button" data-bs-toggle="modal" data-bs-target="#create-operation-modal">Add Operation</button>
+</div>
+@if (operationsList == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Image</th>
+                <th>Name</th>
+                <th>Order</th>
+                <th>Device Name</th>
+                <th>Device Type</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in operationsList)
+            {
+                <tr>
+                    <td>
+                        @if (item.ImageData is not null)
+                        {
+                            <img src="@string.Format("data:image/gif;base64,{0}", Convert.ToBase64String(item.ImageData))" style="width: 35px;" class="rounded-circle">
+                        }
+                    </td>
+                    <td>@item.Name</td>
+                    <td>@item.OrderInWhichToPerform</td>
+                    <td>@item.Device.Name</td>
+                    <td>@item.Device.DeviceType</td>
+                    <td>
+                        @*<i class="btn btn-outline-warning fa fa-1x fa-pencil-alt mr-1 rounded-circle"></i>
+                            <i class="btn btn-outline-info fa fa-info mr-1 rounded-circle"></i>*@
+                        <i class="btn btn-outline-danger fa fa-trash-alt rounded-circle" @onclick="()=>OnDeleteOperation(item.OperationID)"></i>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+    <OperationManager.Components.CreateOperationComponent @bind-operationsList="operationsList" />
+
+}
+@code {
+    public List<Operation> operationsList;
+    private List<Device> deviceList;
+
+    protected override async Task OnInitializedAsync()
+    {
+        operationsList = await OperationService.GetOperationsAsync();
+        deviceList = await DeviceService.GetDevicesAsync();
+    }
+
+    async Task OnDeleteOperation(int id)
+    {
+        bool confirmed = await JsRuntime.InvokeAsync<bool>("confirm", "Are you sure?");
+        if (confirmed)
+        {
+            var res = await OperationService.DeleteOperationsByIdAsync(id);
+            operationsList = await OperationService.GetOperationsAsync();
+            this.StateHasChanged();
+        }
+    }
+    async Task OnDeleteDevice(int id)
+    {
+        bool confirmed = await JsRuntime.InvokeAsync<bool>("confirm", "Are you sure?");
+        if (confirmed)
+        {
+            var res = await DeviceService.DeleteDevicesByIdAsync(id);
+            deviceList = await DeviceService.GetDevicesAsync();
+            this.StateHasChanged();
+        }
+    }
+}

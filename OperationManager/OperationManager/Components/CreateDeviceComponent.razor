@@ -1,0 +1,68 @@
+﻿@using OperationManager.Helpers
+@using OperationManager.Models
+@using OperationManager.Services
+@using System.IO
+@inject DeviceService DeviceService
+@inject DeviceService DeviceService
+@inject IJSRuntime JsRuntime
+
+@if (deviceList == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <div class="modal fade" id="create-device-modal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="staticBackdropLabel">Create new device</h5>
+                    <button type="button" class="btn" data-bs-dismiss="modal" aria-label="Close">X</button>
+                </div>
+                <EditForm Model=@Device OnSubmit=@FormSubmittedAsync>
+                    <div class="modal-body">
+
+                        <DataAnnotationsValidator />
+                        <ValidationSummary />
+
+                        <div class="form-group">
+                            <label for="name">Name</label>
+                            <InputText id="name" class="form-control" @bind-Value="Device.Name" />
+                        </div>
+                        <div class="form-group">
+                            <label for="Device">Device</label>
+                            <InputSelect id="Device" class="form-control" @bind-Value="Device.DeviceType">
+                                <option value="">please select device...</option>
+                                @foreach (var type in Enum.GetValues(typeof(DeviceType)))
+                                {
+                                <option value="@type">@type</option>
+                                }
+                        </InputSelect>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <input type="submit" value="Submit" class="btn btn-primary" />
+                </div>
+            </EditForm>
+        </div>
+    </div>
+</div>
+}
+@code {
+    [Parameter]
+    public List<Device> deviceList { get; set; }
+    [Parameter]
+    public EventCallback<List<Device>> deviceListChanged { get; set; }
+    Device Device = new Device();
+
+    async Task FormSubmittedAsync()
+    {
+        var result = await DeviceService.SaveDevicesByIdAsync(Device);
+        deviceList = await DeviceService.GetDevicesAsync();
+        await deviceListChanged.InvokeAsync(deviceList);
+        this.StateHasChanged();
+    }
+
+
+}

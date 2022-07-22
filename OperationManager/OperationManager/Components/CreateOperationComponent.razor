@@ -1,0 +1,101 @@
+﻿@using OperationManager.Helpers
+@using OperationManager.Models
+@using OperationManager.Services
+@using System.IO
+@inject OperationService OperationService
+@inject DeviceService DeviceService
+@inject IJSRuntime JsRuntime
+
+@if (deviceList == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <div class="modal fade" id="create-operation-modal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="staticBackdropLabel">Modal title</h5>
+                    <button type="button" class="btn" data-bs-dismiss="modal" aria-label="Close">X</button>
+                </div>
+                <EditForm Model=@Operation OnSubmit=@FormSubmittedAsync>
+                    <div class="modal-body">
+
+                        <DataAnnotationsValidator />
+                        <ValidationSummary />
+
+                        <div class="form-group">
+                            <label for="name">Name</label>
+                            <InputText id="name" class="form-control" @bind-Value="Operation.Name" />
+                        </div>
+                        <div class="form-group">
+                            <label for="OrderInWhichToPerform">Order in which to perform</label>
+                            <InputNumber id="OrderInWhichToPerform" class="form-control" @bind-Value="Operation.OrderInWhichToPerform" ParsingErrorMessage="Must be an integer value" />
+                        </div>
+                        <div class="form-group">
+                            <label for="ImageData">Image</label>
+                            <InputFile id="ImageData" accepts=".gif" OnChange="@OnInputFileChangeAsync" class="form-control-file" @bind-Value="Operation.ImageData" />
+                        </div>
+                        <div class="form-group">
+                            <label for="Device">Device</label>
+                            <InputSelect id="Device" class="form-control" @bind-Value="Operation.Device.DeviceID">
+                                <option value="">please select device...</option>
+                                @foreach (var device in deviceList)
+                                {
+                                <option value="@device.DeviceID">@device.Name</option>
+                                }
+                        </InputSelect>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <input type="submit" value="Submit" class="btn btn-primary" />
+                </div>
+            </EditForm>
+        </div>
+    </div>
+</div>
+}
+@code {
+    [Parameter]
+    public List<Operation> operationsList { get; set; }
+    [Parameter]
+    public EventCallback<List<Operation>> operationsListChanged { get; set; }
+    private List<Device> deviceList;
+    Operation Operation = new Operation()
+        {
+            Device = new Device()
+        };
+    IReadOnlyList<IBrowserFile> selectedFiles;
+
+    protected override async Task OnInitializedAsync()
+    {
+        deviceList = await DeviceService.GetDevicesAsync();
+
+    }
+
+    async Task FormSubmittedAsync()
+    {
+        Operation.Device = deviceList.FirstOrDefault(x => x.DeviceID == Operation.Device.DeviceID);
+
+        if (selectedFiles.Count > 0)
+        {
+            var file = selectedFiles[0];
+            Stream stream = file.OpenReadStream();
+            Operation.ImageData = await Converter.ToByteArrayAsync(stream);
+            stream.Close();
+        }
+        var result = await OperationService.SaveOperationsByIdAsync(Operation);
+        operationsList = await OperationService.GetOperationsAsync();
+        await operationsListChanged.InvokeAsync(operationsList);
+        this.StateHasChanged();
+    }
+
+    private async Task OnInputFileChangeAsync(InputFileChangeEventArgs e)
+    {
+        selectedFiles = e.GetMultipleFiles();
+        this.StateHasChanged();
+    }
+
+}
